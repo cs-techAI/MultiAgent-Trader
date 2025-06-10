@@ -10,6 +10,7 @@ load_dotenv()
 
 
 class DeepSeekService:
+    
     client = OpenAI(
         api_key=os.getenv("DEEPSEEK_API_KEY"),
         base_url="https://api.deepseek.com"
@@ -90,7 +91,7 @@ Respond with just the ticker symbol in uppercase. If not found, say "UNKNOWN".
 
     
 
-    
+
 
     @staticmethod
     def suggest_action_for_stock(symbol: str) -> str:
