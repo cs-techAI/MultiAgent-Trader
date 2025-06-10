@@ -49,6 +49,7 @@ class MemoryService:
 
     def log_trade(self, action: str, asset: str, quantity: float, result: str = ""):
         cursor = self.conn.cursor()
+        
         cursor.execute(
             "INSERT INTO trade_memory (timestamp, action, asset, quantity, result) VALUES (?, ?, ?, ?, ?)",
             (datetime.now().isoformat(), action, asset, quantity, result)
