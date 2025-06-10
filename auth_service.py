@@ -8,6 +8,7 @@ USER_DB_PATH = os.path.join(os.path.dirname(__file__), "user_db.json")
 
 def load_users():
     if not os.path.exists(USER_DB_PATH):
+        
         return {}
     with open(USER_DB_PATH, "r") as f:
         return json.load(f)
@@ -33,7 +34,7 @@ def register_user(username, password):
 def authenticate_user(username, password):
     users = load_users()
 
-    
+
     if username not in users:
         return False
     hashed = users[username]["password"].encode()
