@@ -41,6 +41,7 @@ def monitor_portfolio(user_input: str) -> str:
             open_orders.append(f"- {o['side']} {o['qty']} {o['symbol']} → {o['status']}")
     orders_section = "\n".join(open_orders) if open_orders else "No pending orders."
 
+
     return f"""📊 Portfolio Monitor Summary:
 
 🧠 Recent User Questions:
