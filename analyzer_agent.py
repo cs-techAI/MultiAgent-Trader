@@ -7,6 +7,7 @@ from services.deepseek_service import DeepSeekService
 
 
 def analyze_stock(query: str) -> str:
+    
     # Extract symbol using DeepSeek
     symbol = DeepSeekService.extract_stock_symbol(query) or "this stock"
 
