@@ -1,5 +1,3 @@
-# ui/streamlit_app.py
-
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -14,10 +12,28 @@ from services.deepseek_service import DeepSeekService
 from services.news_service import NewsService
 from agents.router_agent import RouterAgent
 
-
-
 st.set_page_config(page_title="SmartTrader", layout="wide")
+
+
+
+
+# Inject CSS for card-style performance tiles
+st.markdown("""
+<style>
+.stock-box {
+    padding: 1em;
+    border-radius: 10px;
+    font-weight: bold;
+    text-align: center;
+    margin: 0.5em;
+}
+.green { background: #e6ffed; color: #008000; }
+.red { background: #ffe6e6; color: #d00000; }
+</style>
+""", unsafe_allow_html=True)
+
 st.title("📈 SmartTrader Assistant")
+
 
 
 
@@ -29,7 +45,6 @@ if "user" not in st.session_state:
     password = st.text_input("Password", type="password")
 
     if auth_mode == "Signup":
-        
         confirm = st.text_input("Confirm Password", type="password")
         if st.button("Create Account"):
             if password != confirm:
@@ -38,6 +53,8 @@ if "user" not in st.session_state:
                 success, msg = register_user(username, password)
                 st.success(msg) if success else st.error(msg)
 
+
+    
     else:
         if st.button("Login"):
             if authenticate_user(username, password):
@@ -45,7 +62,7 @@ if "user" not in st.session_state:
                 st.success(f"Welcome {username}!")
                 st.rerun()
             else:
-                st.error("Invalid credentials.")
+                st.error("Invalid credentials")
 
 else:
     st.sidebar.success(f"Welcome, {st.session_state.user} 👋")
@@ -53,7 +70,7 @@ else:
         del st.session_state.user
         st.rerun()
 
-    tab = st.sidebar.radio("Choose view:", ["🤖 Chat", "📊 Portfolio Dashboard"])
+    tab = st.sidebar.radio("Choose view:", ["📊 Portfolio Dashboard", "🤖 Chat"])
 
     if "router" not in st.session_state:
         st.session_state.router = RouterAgent()
@@ -62,12 +79,101 @@ else:
 
 
 
+    
+    # ------------------- 📊 Portfolio Dashboard -------------------
+    if tab == "📊 Portfolio Dashboard":
+        positions = PortfolioService.get_positions()
 
+        if "error" in positions:
+            st.error(f"Failed to load portfolio: {positions['error']}")
+        elif not positions:
+            st.info("No open positions found.")
+
+        
+        else:
+            df = pd.DataFrame(positions)
+            df = df[["symbol", "qty", "avg_entry_price", "market_value", "unrealized_pl", "unrealized_plpc", "current_price"]]
+            df.columns = ["Symbol", "Qty", "Avg Price", "Market Value", "Unrealized P/L", "Unrealized %", "Price"]
+            df = df.astype({"Market Value": float, "Unrealized P/L": float, "Unrealized %": float, "Price": float})
+
+            st.markdown("## 📊 Your Stock Performance")
+            cols = st.columns(len(df))
+            for i, row in df.iterrows():
+                pct = float(row["Unrealized %"])
+                color = "green" if pct >= 0 else "red"
+                sign = "▲" if pct >= 0 else "▼"
+                label = f"{row['Symbol']}<br>${row['Price']:.2f} {sign} ({pct:.2f}%)"
+                cols[i].markdown(f"<div class='stock-box {color}'>{label}</div>", unsafe_allow_html=True)
+
+            # 🔍 NEW: Suggested Stocks (Bull/Bear Research)
+            st.divider()
+            st.subheader("🔍 Suggested Stocks You Don't Own")
+            st.markdown("Here are some high-performing stocks you don't hold, with short-term and long-term recommendations:")
+
+            held_symbols = set(df["Symbol"].unique())
+            all_top_stocks = ["MSFT", "AMZN", "NFLX", "NVDA", "TSLA", "GOOG"]
+            candidates = [s for s in all_top_stocks if s not in held_symbols][:3]  # limit to top 3 for now
+
+
+            
+            for symbol in candidates:
+                bull_reason = DeepSeekService.ask_deepseek(f"Explain why buying {symbol} is a good idea for the short term.")
+                bear_reason = DeepSeekService.ask_deepseek(f"What are the risks or downsides of buying {symbol} for the long term?")
+                st.markdown(f"### {symbol}")
+                st.markdown(f"**📈 Bullish View (Short-Term):** {bull_reason}")
+                st.markdown(f"**📉 Bearish View (Long-Term):** {bear_reason}")
+
+            st.divider()
+            st.subheader("📆 Current Holdings")
+            st.dataframe(df[["Symbol", "Qty", "Avg Price", "Market Value", "Unrealized P/L", "Unrealized %"]], use_container_width=True)
+
+            st.divider()
+            st.subheader("🗳️ Market Headlines")
+            for article in NewsService.get_market_news():
+                st.markdown(f"- [{article['headline']}]({article.get('url', '#')})")
+
+            st.divider()
+            st.subheader("📈 Portfolio Charts")
+
+            pie = px.pie(df, names="Symbol", values="Market Value", title="💰 Portfolio Allocation by Value")
+            st.plotly_chart(pie, use_container_width=True)
+
+            bar = px.bar(df, x="Symbol", y="Unrealized P/L", title="📉 Unrealized Profit & Loss")
+            st.plotly_chart(bar, use_container_width=True)
+
+            st.divider()
+            st.subheader("💡 Suggestions")
+            for sym in df["Symbol"]:
+                suggestion = DeepSeekService.suggest_action_for_stock(sym)
+                st.markdown(f"**{sym}** → {suggestion}")
+
+
+
+            
+            st.divider()
+            st.subheader("⏳ Pending Orders")
+            orders = PortfolioService.get_open_orders()
+            if "error" in orders:
+                st.error(f"Failed to load orders: {orders['error']}")
+            elif not orders:
+                st.info("No pending orders.")
+            else:
+                df_orders = pd.DataFrame(orders)
+                df_orders = df_orders[["symbol", "qty", "side", "type", "status", "submitted_at"]]
+                df_orders.columns = ["Symbol", "Qty", "Side", "Type", "Status", "Submitted At"]
+                st.dataframe(df_orders, use_container_width=True)
+
+
+    
     # ------------------- 🤖 Chat -------------------
-    if tab == "🤖 Chat":
+    elif tab == "🤖 Chat":
         st.markdown("### 💬 Chat with SmartTrader")
+        chat_container = st.container()
 
+
+        
         for speaker, message in st.session_state.chat_history:
+       
             if speaker == "You":
                 st.markdown(f"<div style='text-align:right;background-color:#d2e8ff;padding:10px 15px;border-radius:10px;margin:5px 0 10px 30%;max-width:70%;float:right;clear:both'><strong>🧑 You:</strong><br>{message}</div>", unsafe_allow_html=True)
             else:
@@ -76,142 +182,9 @@ else:
 
         user_input = st.chat_input("Ask anything about stocks, trades, or portfolio...")
 
-
-
+        
         if user_input:
             st.session_state.chat_history.append(("You", user_input))
-
-            if "investment_flow" in st.session_state:
-                flow = st.session_state["investment_flow"]
-                context = flow.get("context", "")
-                result = DeepSeekService.handle_investment_followup(context, user_input)
-
-                action = result.get("action")
-                msg = result.get("message", "")
-                symbol = result.get("symbol", flow.get("symbol"))
-                qty = result.get("quantity", flow.get("quantity"))
-
-
-
-                if action == "ask_quantity":
-                    st.session_state["investment_flow"] = {
-                        "step": "awaiting_quantity",
-                        "symbol": symbol,
-                        "context": context + f"\nUser: {user_input}\nAssistant: {msg}"
-                    }
-                    st.session_state.chat_history.append(("SmartTrader", (msg, "SmartTrader")))
-                    st.rerun()
-
-                elif action == "ask_confirmation":
-                    st.session_state["investment_flow"] = {
-                        "step": "awaiting_confirmation",
-                        "symbol": symbol,
-                        "quantity": qty,
-                        "context": context + f"\nUser: {user_input}\nAssistant: {msg}"
-                    }
-                    st.session_state.chat_history.append(("SmartTrader", (msg, "SmartTrader")))
-                    st.rerun()
-
-
-                elif action == "execute_trade":
-                    command = f"buy {qty} {symbol}"
-                    response, used = st.session_state.router.route(command)
-                    st.session_state.chat_history.append(("SmartTrader", (response, "TraderAgent")))
-                    del st.session_state["investment_flow"]
-                    st.rerun()
-
-                elif action == "cancel":
-                    del st.session_state["investment_flow"]
-                    st.session_state.chat_history.append(("SmartTrader", ("Got it. Trade cancelled.", "SmartTrader")))
-                    st.rerun()
-
-                else:
-                    st.session_state.chat_history.append(("SmartTrader", (msg, "SmartTrader")))
-                    st.rerun()
-
-            else:
-                response, agent_used = st.session_state.router.route(user_input)
-
-                if agent_used == "AnalyzerAgent":
-                    symbol = DeepSeekService.extract_stock_symbol(user_input)
-                    if symbol:
-                        followup = f"Would you like to invest in {symbol} now?"
-                        st.session_state["investment_flow"] = {
-                            "step": "awaiting_investment_decision",
-                            "symbol": symbol,
-                            "context": response + f"\n\nAssistant: {followup}"
-                        }
-                        response += f"\n\n🤖 {followup}"
-
-                st.session_state.chat_history.append(("SmartTrader", (response, agent_used)))
-                st.rerun()
-
-
-
-
-    # ------------------- 📊 Dashboard -------------------
-    elif tab == "📊 Portfolio Dashboard":
-        st.subheader("📦 Current Holdings")
-        positions = PortfolioService.get_positions()
-
-        if "error" in positions:
-            st.error(f"Failed to load portfolio: {positions['error']}")
-
-
-        elif not positions:
-            st.info("No open positions found.")
-
-        else:
-            df = pd.DataFrame(positions)
-            df = df[["symbol", "qty", "avg_entry_price", "market_value", "unrealized_pl", "unrealized_plpc"]]
-            df.columns = ["Symbol", "Qty", "Avg Price", "Market Value", "Unrealized P/L", "Unrealized %"]
-            df["Market Value"] = df["Market Value"].astype(float)
-            df["Unrealized P/L"] = df["Unrealized P/L"].astype(float)
-            df["Unrealized %"] = df["Unrealized %"].astype(float).map(lambda x: f"{x:.2%}")
-            st.dataframe(df, use_container_width=True)
-
-
-
-            st.subheader("📈 Portfolio Allocation")
-            fig_pie = px.pie(df, names="Symbol", values="Market Value")
-            st.plotly_chart(fig_pie, use_container_width=True)
-
-
-            st.subheader("📈 Unrealized Gains / Losses")
-            fig_bar = px.bar(df, x="Symbol", y="Unrealized P/L")
-            st.plotly_chart(fig_bar, use_container_width=True)
-
-
-
-
-            st.divider()
-            st.subheader("🗞️ Market Headlines")
-            for article in NewsService.get_market_news():
-                st.markdown(f"- [{article['headline']}]({article.get('url', '#')})")
-
-
-
-            st.divider()
-            st.subheader("💡 Stock Suggestions")
-            for sym in df["Symbol"]:
-                suggestion = DeepSeekService.suggest_action_for_stock(sym)
-                st.markdown(f"**{sym}** → {suggestion}")
-
-
-
-            st.divider()
-            st.subheader("⏳ Pending Orders")
-            orders = PortfolioService.get_open_orders()
-
-
-            if "error" in orders:
-                st.error(f"Failed to load orders: {orders['error']}")
-
-            elif not orders:
-                st.info("No pending orders.")
-
-            else:
-                df_orders = pd.DataFrame(orders)
-                df_orders = df_orders[["symbol", "qty", "side", "type", "status", "submitted_at"]]
-                df_orders.columns = ["Symbol", "Qty", "Side", "Type", "Status", "Submitted At"]
-                st.dataframe(df_orders, use_container_width=True)
+            response, agent_used = st.session_state.router.route(user_input)
+            st.session_state.chat_history.append(("SmartTrader", (response, agent_used)))
+            st.rerun()
