@@ -1,6 +1,6 @@
 import json
 import os
-import bcrypt
+import bcrypt  #external package for password verification
 
 USER_DB_PATH = os.path.join(os.path.dirname(__file__), "user_db.json")
 
