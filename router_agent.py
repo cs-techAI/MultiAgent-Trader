@@ -14,8 +14,7 @@ from agents.trader_agent import trader_agent
 from agents.monitor_agent import monitor_agent
 from services.deepseek_service import DeepSeekService
 
-
-
+# routes to the main three agents as per the intent 
 
 load_dotenv()
 
