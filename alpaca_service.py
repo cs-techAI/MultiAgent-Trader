@@ -59,7 +59,7 @@ class AlpacaService:
             print("❌ Alpaca HTTP Error:", error_message)
             return {"error": error_message}
 
-
+# fully updated
 
         except Exception as e:
             print("❌ Unexpected Alpaca Error:", str(e))
