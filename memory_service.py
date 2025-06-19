@@ -70,3 +70,6 @@ class MemoryService:
         cursor = self.conn.cursor()
         cursor.execute("SELECT timestamp, action, asset, quantity, result FROM trade_memory ORDER BY timestamp DESC LIMIT ?", (limit,))
         return cursor.fetchall()
+
+
+#enddd
