@@ -33,3 +33,5 @@ analyzer_agent = Tool(
     func=analyze_stock,
     description="Use this to analyze a stock or market query and suggest whether to invest."
 )
+
+#end
