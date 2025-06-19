@@ -7,7 +7,7 @@ from services.memory_service import MemoryService
 from services.deepseek_service import DeepSeekService
 
 
-
+# executes paper trading using alpaca api key
 memory = MemoryService()
 
 
