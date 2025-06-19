@@ -12,7 +12,7 @@ class PortfolioService:
     SECRET_KEY = os.getenv("ALPACA_SECRET_KEY")
     BASE_URL = os.getenv("ALPACA_BASE_URL", "https://paper-api.alpaca.markets")
 
-
+# each users portofolio manager
 
     @staticmethod
     def get_positions():
@@ -53,3 +53,6 @@ class PortfolioService:
         
         except Exception as e:
             return {"error": str(e)}
+
+
+#end
