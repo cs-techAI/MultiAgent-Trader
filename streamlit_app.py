@@ -198,3 +198,6 @@ else:
                 response, agent_used = st.session_state.router.route(user_input)
                 st.session_state.chat_history.append(("SmartTrader", (response, agent_used)))
                 st.rerun()
+
+
+#endd
