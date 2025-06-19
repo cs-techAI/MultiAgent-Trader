@@ -1,3 +1,5 @@
+# for user authentication (multi user)
+
 import json
 import os
 import bcrypt  #external package for password verification
