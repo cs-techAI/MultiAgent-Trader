@@ -5,6 +5,8 @@ from services.memory_service import MemoryService
 from services.portfolio_service import PortfolioService
 
 
+
+# for monitoring the portfolio
 memory = MemoryService()
 
 
