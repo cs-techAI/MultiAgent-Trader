@@ -4,7 +4,7 @@
 ## ✅ `requirements.txt`
 
 ```txt
-streamlit>=1.25.0
+streamlit
 requests
 openai
 langchain>=0.1.14
