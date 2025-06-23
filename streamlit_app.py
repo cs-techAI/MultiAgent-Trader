@@ -5,7 +5,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-
 from services.auth_service import authenticate_user, register_user
 from services.portfolio_service import PortfolioService
 from services.deepseek_service import DeepSeekService
@@ -15,7 +14,7 @@ from agents.trader_agent import trade_stock
 
 st.set_page_config(page_title="SmartTrader", layout="wide")
 
-# Inject colorful background and card styles
+# 🎨 Custom Styling
 st.markdown("""
 <style>
 body, .stApp {
@@ -48,26 +47,33 @@ if "user" not in st.session_state:
 
     if auth_mode == "Signup":
         confirm = st.text_input("Confirm Password", type="password")
+        alpaca_key = st.text_input("Alpaca API Key")
+        alpaca_secret = st.text_input("Alpaca Secret Key", type="password")
         if st.button("Create Account"):
             if password != confirm:
                 st.error("Passwords do not match.")
             else:
-                success, msg = register_user(username, password)
+                success, msg = register_user(username, password, alpaca_key, alpaca_secret)
                 st.success(msg) if success else st.error(msg)
 
     else:
         if st.button("Login"):
-            if authenticate_user(username, password):
+            user = authenticate_user(username, password)
+            if user:
                 st.session_state.user = username
+                st.session_state.alpaca_key = user["alpaca_key"]
+                st.session_state.alpaca_secret = user["alpaca_secret"]
                 st.success(f"Welcome {username}!")
                 st.rerun()
             else:
                 st.error("Invalid credentials")
 
+# -------------------- Logged In --------------------
 else:
     st.sidebar.success(f"Welcome, {st.session_state.user} 👋")
     if st.sidebar.button("Logout"):
-        del st.session_state.user
+        for k in ["user", "alpaca_key", "alpaca_secret"]:
+            st.session_state.pop(k, None)
         st.rerun()
 
     if "page" not in st.session_state:
@@ -76,7 +82,11 @@ else:
         st.session_state.detail_symbol = None
     if "buying_symbol" not in st.session_state:
         st.session_state.buying_symbol = None
+    if "router" not in st.session_state:
+        st.session_state.router = RouterAgent()
+        st.session_state.chat_history = []
 
+    # -------------------- View Details Page --------------------
     if st.session_state.page == "details":
         symbol = st.session_state.detail_symbol
         st.subheader(f"🔍 Detailed Analysis for {symbol}")
@@ -89,15 +99,15 @@ else:
             st.session_state.detail_symbol = None
             st.rerun()
 
+    # -------------------- Main Dashboard --------------------
     elif st.session_state.page == "dashboard":
         tab = st.sidebar.radio("Choose view:", ["📊 Portfolio Dashboard", "🤖 Chat"])
 
-        if "router" not in st.session_state:
-            st.session_state.router = RouterAgent()
-            st.session_state.chat_history = []
-
         if tab == "📊 Portfolio Dashboard":
-            positions = PortfolioService.get_positions()
+            positions = PortfolioService.get_positions(
+                st.session_state.alpaca_key,
+                st.session_state.alpaca_secret
+            )
 
             if "error" in positions:
                 st.error(f"Failed to load portfolio: {positions['error']}")
@@ -121,7 +131,6 @@ else:
                 st.divider()
                 st.subheader("🔍 Suggested Stocks You Don't Own")
                 st.markdown("Here are some high-performing stocks you don't hold:")
-
                 held_symbols = set(df["Symbol"].unique())
                 all_top_stocks = ["MSFT", "AMZN", "NFLX", "NVDA", "TSLA", "GOOG"]
                 candidates = [s for s in all_top_stocks if s not in held_symbols][:3]
@@ -142,7 +151,11 @@ else:
                         if st.session_state.buying_symbol == symbol:
                             qty = st.number_input(f"How many shares of {symbol} to buy?", min_value=1, step=1, key=f"qty_{symbol}")
                             if st.button(f"✅ Confirm Buy {symbol}"):
-                                result = trade_stock(f"buy {qty} {symbol}")
+                                result = trade_stock(
+                                    f"buy {qty} {symbol}",
+                                    st.session_state.alpaca_key,
+                                    st.session_state.alpaca_secret
+                                )
                                 st.success(result)
                                 st.session_state.buying_symbol = None
 
@@ -171,7 +184,10 @@ else:
 
                 st.divider()
                 st.subheader("⏳ Pending Orders")
-                orders = PortfolioService.get_open_orders()
+                orders = PortfolioService.get_open_orders(
+                    st.session_state.alpaca_key,
+                    st.session_state.alpaca_secret
+                )
                 if "error" in orders:
                     st.error(f"Failed to load orders: {orders['error']}")
                 elif not orders:
@@ -184,8 +200,6 @@ else:
 
         elif tab == "🤖 Chat":
             st.markdown("### 💬 Chat with SmartTrader")
-            chat_container = st.container()
-
             for speaker, message in st.session_state.chat_history:
                 if speaker == "You":
                     st.markdown(f"<div style='text-align:right;background-color:#d2e8ff;padding:10px 15px;border-radius:10px;margin:5px 0 10px 30%;max-width:70%;float:right;clear:both'><strong>🧑 You:</strong><br>{message}</div>", unsafe_allow_html=True)
@@ -199,6 +213,3 @@ else:
                 response, agent_used = st.session_state.router.route(user_input)
                 st.session_state.chat_history.append(("SmartTrader", (response, agent_used)))
                 st.rerun()
-
-
-#endd
