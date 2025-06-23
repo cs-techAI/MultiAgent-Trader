@@ -1,12 +1,13 @@
 # services/deepseek_service.py
 
-# for llm
 import os
 import json
 from dotenv import load_dotenv
 from openai import OpenAI
 
 load_dotenv()
+
+
 
 class DeepSeekService:
     
@@ -106,6 +107,3 @@ Respond with:
 Also include 1-line justification.
 """
         return DeepSeekService.ask_deepseek(prompt)
-
-
-#endd
