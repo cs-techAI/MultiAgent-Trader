@@ -1,7 +1,6 @@
 # agents/router_agent.py
 
 import os
-
 from dotenv import load_dotenv
 from langchain.agents import initialize_agent, AgentType
 from langchain_openai import ChatOpenAI
@@ -11,8 +10,9 @@ from agents.analyzer_agent import analyzer_agent
 from agents.trader_agent import trader_agent
 from agents.monitor_agent import monitor_agent
 from services.deepseek_service import DeepSeekService
+    
 
-# routes to the main three agents as per the intent 
+
 
 load_dotenv()
 
@@ -24,7 +24,6 @@ class RouterAgent:
             base_url="https://api.deepseek.com"
         )
 
-        
         
         self.tools = [
             Tool(
@@ -91,3 +90,5 @@ Answer:
             return response, intent_label
         except Exception as e:
             return f"❌ Routing Error: {str(e)}", "RouterAgent"
+
+ChatOpenAI.model_rebuild()
