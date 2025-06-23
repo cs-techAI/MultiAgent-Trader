@@ -122,6 +122,7 @@ openai
 python-dotenv
 langchain
 tqdm
+
 ```
 
 ---
