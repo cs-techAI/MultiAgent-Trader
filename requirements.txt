@@ -1,13 +1,9 @@
-
----
-
-## ✅ `requirements.txt`
-
-```txt
+bcrypt
 streamlit
+plotly
+pandas
 requests
 openai
-langchain>=0.1.14
-langchain-openai>=0.1.3
 python-dotenv
-pandas
+langchain
+tqdm
