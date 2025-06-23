@@ -10,8 +10,6 @@ from services.deepseek_service import DeepSeekService
 # executes paper trading using alpaca api key
 memory = MemoryService()
 
-
-
 def trade_stock(user_input: str) -> str:
     memory.log_user_input(user_input)
 
