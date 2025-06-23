@@ -52,8 +52,6 @@ Create a `.env` file in root:
 
 ```env
 DEEPSEEK_API_KEY=your_deepseek_api_key
-ALPACA_API_KEY=your_alpaca_api_key
-ALPACA_SECRET_KEY=your_alpaca_secret_key
 ALPACA_BASE_URL=https://paper-api.alpaca.markets
 FINNHUB_API_KEY=your_finnhub_api_key
 ```
