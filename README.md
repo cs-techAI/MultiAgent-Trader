@@ -1,132 +1,141 @@
-## 🚀 Overview
+# 🤖 SmartTrader — Langchain-Powered Autonomous Trading Assistant
 
-SmartTrader is a **multi-agent financial assistant** that enables:
+SmartTrader is an intelligent, multi-agent trading assistant built using **Langchain**, **DeepSeek LLM**, and **Streamlit**, with trading operations executed via the **Alpaca API**.
 
-- 🧠 AI-powered stock analysis
-- 📊 Real-time portfolio monitoring
-- 💸 Trade execution via Alpaca (paper)
-- 📰 Latest market news
-- 🔐 Secure multi-user login/signup with custom API keys
+It provides:
 
----
-
-## 📦 Features
-
-| Feature                     | Description                                                                 |
-|----------------------------|-----------------------------------------------------------------------------|
-| 🔐 Login & Signup          | Secure authentication with Alpaca API key storage                          |
-| 💬 Chat Assistant          | Ask stock-related questions using natural language                         |
-| 📈 Portfolio Dashboard     | View current holdings, unrealized gains, charts                            |
-| 📉 Trading Agent           | Place real trades via Alpaca Paper API (buy/sell)                          |
-| 📰 News Section            | Latest financial headlines via Finnhub                                     |
-| 💡 Smart Suggestions       | Buy/Sell/Hold recommendations for each stock you own                       |
+* 💬 Natural language chat interface for analysis and trading
+* 🧠 Multi-agent system: Analyzer, Trader, Monitor (orchestrated by Router)
+* 📈 Real-time portfolio tracking via Alpaca
+* 📊 Interactive dashboard with stock cards, charts, and suggestions
+* 🧠 Persistent memory using SQLite
+* 🔐 Custom login system (JSON + bcrypt)
+* 🎨 Stylish UI with a responsive, colorful layout
 
 ---
 
-## 🛠️ Installation
+## 📁 Project Structure
 
-### 1. Clone the repository
-
-```bash
-
-1. Set up virtual environment
-bash
-Copy
-Edit
-python -m venv .venv
-source .venv/bin/activate  # or .venv\Scripts\activate on Windows
-2. Install dependencies
-bash
-Copy
-Edit
-pip install -r requirements.txt
-🔐 Environment Setup
-Create a .env file in the root directory with the following content:
-
-env
-Copy
-Edit
-DEEPSEEK_API_KEY=your_deepseek_key_here
-FINNHUB_API_KEY=your_finnhub_key_here
-💡 DeepSeek is used for stock analysis and follow-ups. Finnhub provides market headlines.
-
-🚦 Usage
-Launch the app locally:
-
-bash
-Copy
-Edit
-streamlit run ui/streamlit_app_1.py
-Open http://localhost:8501 in your browser.
-
-🧾 Folder Structure
-bash
-Copy
-Edit
-smarttrader/
+```
+langchain_smart_trader/
 │
 ├── agents/
-│   ├── analyzer_agent.py         # Handles stock analysis
-│   ├── monitor_agent.py          # Monitors portfolio and logs
-│   ├── router_agent.py           # Routes queries to the right agent
-│   └── trader_agent.py           # Handles stock trading
+│   ├── analyzer_agent.py        # Stock analysis via DeepSeek
+│   ├── trader_agent.py          # Buy/sell stocks
+│   ├── monitor_agent.py         # Portfolio and order insights
+│   └── router_agent.py          # Langchain AgentExecutor & dispatcher
 │
 ├── services/
-│   ├── alpaca_service.py         # Communicates with Alpaca API
-│   ├── auth_service.py           # Handles user registration/login
-│   ├── deepseek_service.py       # Handles LLM responses and follow-up logic
-│   ├── memory_service.py         # Tracks chat & trade history
-│   ├── news_service.py           # Fetches news from Finnhub
-│   └── portfolio_service.py      # Loads portfolio positions and orders
+│   ├── alpaca_service.py        # Order execution via Alpaca API
+│   ├── auth_service.py          # Login system using bcrypt + JSON
+│   ├── deepseek_service.py      # DeepSeek prompt interface
+│   ├── memory_service.py        # SQLite memory store
+│   ├── news_service.py          # Market news via Finnhub API
+│   └── portfolio_service.py     # Holdings and orders from Alpaca
 │
 ├── ui/
-│   └── streamlit_app_1.py        # Streamlit front-end interface
+│   └── streamlit_app.py         # Streamlit front-end for chat + dashboard
 │
-├── user_db.json                  # Stores user credentials and Alpaca keys
-├── .env                          # API keys (not checked into Git)
-└── requirements.txt              # All Python dependencies
-🧠 Technologies Used
-✅ Streamlit — UI & dashboard
-
-🧠 DeepSeek — LLM for investment logic
-
-📊 Alpaca — Paper trading API
-
-🛠️ LangChain — Agent orchestration
-
-📰 Finnhub — News API
-
-
-📌 Notes
-This app uses Alpaca Paper API (no real trades).
-
-All data is stored locally in user_db.json and session_state.
-
-📝 License
-Licensed under the MIT License. See LICENSE for more info.
-
-
-🔗 Related Projects
-LangChain
-
-Streamlit
-
-yaml
-Copy
-Edit
+├── .env                         # Environment variables
+├── main.py                      # Optional CLI interface
+├── requirements.txt             # All dependencies
+└── README.md                    # Project overview
+```
 
 ---
 
-## ✅ Matching `requirements.txt`
+## 🔧 Setup Instructions
 
-```txt
-streamlit==1.35.0
-pandas
+### 1. 🔐 Environment Configuration
+
+Create a `.env` file in root:
+
+```env
+DEEPSEEK_API_KEY=your_deepseek_api_key
+ALPACA_API_KEY=your_alpaca_api_key
+ALPACA_SECRET_KEY=your_alpaca_secret_key
+ALPACA_BASE_URL=https://paper-api.alpaca.markets
+FINNHUB_API_KEY=your_finnhub_api_key
+```
+
+### 2. 📦 Install Requirements
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. 🚀 Run the Streamlit App
+
+```bash
+streamlit run ui/streamlit_app.py
+```
+
+---
+
+## ✨ Features & Agents
+
+| Agent             | Description                                                      |
+| ----------------- | ---------------------------------------------------------------- |
+| `AnalyzerAgent`   | Uses DeepSeek to analyze stocks and recommend Buy/Hold/Sell      |
+| `TraderAgent`     | Parses trade instructions and executes them on Alpaca            |
+| `MonitorAgent`    | Fetches and displays portfolio, open orders, and trade history   |
+| `RouterAgent`     | LLM-powered dispatcher that routes messages to the correct agent |
+| `DeepSeekService` | LLM handler for symbol extraction, follow-ups, and suggestions   |
+
+## 🧠 Agentic Flow Examples
+
+* "Should I buy Tesla?"
+  → `RouterAgent` → `AnalyzerAgent` → Analysis + prompt: "Want to invest?"
+
+* "Buy 10 AAPL"
+  → `RouterAgent` → `TraderAgent` → Alpaca order placed
+
+* "Show my positions"
+  → `RouterAgent` → `MonitorAgent` → Table and charts
+
+* "View details" → (UI)
+  → Bull/Bear perspective loaded from DeepSeek
+
+---
+
+## 🎨 UI Highlights
+
+* Color-coded stock performance cards (green/red)
+* Suggested stocks user doesn’t own
+* View Details + Buy popup flow
+* Interactive pie and bar charts
+* Stylish gradient backgrounds and dark sidebar
+
+---
+
+## ✅ Requirements
+
+### `requirements.txt`
+
+```
+bcrypt
+streamlit
 plotly
+pandas
 requests
-python-dotenv
 openai
-langchain==0.3.14
-langchain-openai==0.1.6
-pydantic==1.10.14
-streamlit-authenticator==0.3.2
+python-dotenv
+langchain
+tqdm
+```
+
+---
+
+## 🧱 Built With
+
+* [Langchain](https://github.com/hwchase17/langchain)
+* [DeepSeek](https://deepseek.com)
+* [Streamlit](https://streamlit.io)
+* [Alpaca Markets API](https://alpaca.markets)
+* [Finnhub API](https://finnhub.io)
+
+---
+
+
+
+
