@@ -8,8 +8,6 @@ from openai import OpenAI
 
 load_dotenv()
 
-
-
 class DeepSeekService:
     
     client = OpenAI(
