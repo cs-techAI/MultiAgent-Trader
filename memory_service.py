@@ -4,10 +4,12 @@ import sqlite3
 from datetime import datetime
 
 
+
 class MemoryService:
     def __init__(self, db_path="memory.db"):
         self.conn = sqlite3.connect(db_path, check_same_thread=False)
         self._init_tables()
+
 
 
     def _init_tables(self):
@@ -68,6 +70,3 @@ class MemoryService:
         cursor = self.conn.cursor()
         cursor.execute("SELECT timestamp, action, asset, quantity, result FROM trade_memory ORDER BY timestamp DESC LIMIT ?", (limit,))
         return cursor.fetchall()
-
-
-#enddd
