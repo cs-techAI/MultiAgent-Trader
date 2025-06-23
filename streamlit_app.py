@@ -5,6 +5,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
+
 from services.auth_service import authenticate_user, register_user
 from services.portfolio_service import PortfolioService
 from services.deepseek_service import DeepSeekService
